@@ -8,37 +8,34 @@ version = '3.0.0'
 
 repositories {
     mavenCentral()
-    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
-    maven { url = 'https://nexus.velocitypowered.com/repository/maven-public/' }
+    maven {
+        url = 'https://repo.papermc.io/repository/maven-public/'
+    }
+    maven {
+        url = 'https://nexus.velocitypowered.com/repository/maven-public/'
+    }
 }
 
 dependencies {
-    // Bukkit API
-    compileOnly 'org.bukkit:bukkit:1.20.1-R0.1-SNAPSHOT'
-    
+    // Paper API (Bukkit совместимый)
+    compileOnly 'io.papermc.paper:paper-api:1.20.1-R0.1-SNAPSHOT'
+
     // Velocity API
     compileOnly 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
     annotationProcessor 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
-    
-    // WireGuard Android tunnel library (работает и на сервере)
-    implementation 'com.wireguard.android:tunnel:1.0.20230427'
-    
-    // Curve25519 для ключей
+
+    // Curve25519 Java криптография
     implementation 'org.whispersystems:curve25519-java:0.5.0'
-    
-    // Netty для высокопроизводительной сети
+
+    // Netty для сетевой части
     implementation 'io.netty:netty-all:4.1.100.Final'
-    
-    // JSON для конфигураций
+
+    // Gson для JSON
     implementation 'com.google.code.gson:gson:2.10.1'
-    
-    // Логирование
+
+    // SLF4J + Logback для логирования
     implementation 'org.slf4j:slf4j-api:2.0.9'
     implementation 'ch.qos.logback:logback-classic:1.4.11'
-    
-    // Криптография
-    implementation 'org.bouncycastle:bcprov-jdk18on:1.76'
-    implementation 'org.bouncycastle:bcpkix-jdk18on:1.76'
 }
 
 java {
@@ -49,21 +46,18 @@ tasks {
     build {
         dependsOn shadowJar
     }
-    
+
     shadowJar {
         archiveClassifier.set('')
         mergeServiceFiles()
-        
         relocate 'io.netty', 'com.leir4iks.wireguard.relocated.netty'
         relocate 'org.whispersystems', 'com.leir4iks.wireguard.relocated.whispersystems'
-        relocate 'org.bouncycastle', 'com.leir4iks.wireguard.relocated.bouncycastle'
         relocate 'com.google.gson', 'com.leir4iks.wireguard.relocated.gson'
-        
         exclude 'META-INF/*.SF'
-        exclude 'META-INF/*.DSA' 
+        exclude 'META-INF/*.DSA'
         exclude 'META-INF/*.RSA'
     }
-    
+
     processResources {
         filesMatching(['plugin.yml', 'velocity-plugin.json']) {
             expand project.properties
