@@ -1,0 +1,92 @@
+name: Setup Gradle Wrapper
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'build.gradle'
+      - 'build.gradle.kts'
+
+permissions:
+  contents: write
+
+jobs:
+  setup-wrapper:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Set up JDK 17
+      uses: actions/setup-java@v4
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+    
+    - name: Verify Java 17
+      run: |
+        java -version
+        javac -version
+        echo "JAVA_HOME: $JAVA_HOME"
+    
+    - name: Check if Gradle Wrapper exists
+      id: check_wrapper
+      run: |
+        if [ ! -f "./gradlew" ] || [ ! -f "./gradlew.bat" ] || [ ! -f "./gradle/wrapper/gradle-wrapper.jar" ]; then
+          echo "wrapper_missing=true" >> $GITHUB_OUTPUT
+          echo "Gradle Wrapper files are missing or incomplete"
+        else
+          echo "wrapper_missing=false" >> $GITHUB_OUTPUT
+          echo "Gradle Wrapper files are present"
+        fi
+    
+    - name: Generate Gradle Wrapper for Java 17
+      if: steps.check_wrapper.outputs.wrapper_missing == 'true'
+      run: |
+        echo "Generating Gradle Wrapper for Java 17..."
+        gradle wrapper --gradle-version 8.5 --distribution-type bin
+        
+        # Устанавливаем права выполнения
+        chmod +x gradlew
+        
+        # Проверяем что файлы созданы
+        ls -la gradlew* gradle/wrapper/
+    
+    - name: Update Git index for executable permissions
+      if: steps.check_wrapper.outputs.wrapper_missing == 'true'
+      run: |
+        git update-index --chmod=+x gradlew
+    
+    - name: Commit and push Gradle Wrapper
+      if: steps.check_wrapper.outputs.wrapper_missing == 'true'
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        git add gradlew gradlew.bat gradle/wrapper/gradle-wrapper.jar gradle/wrapper/gradle-wrapper.properties
+        
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "🔧 Add Gradle Wrapper for Java 17
+          
+          - Generated with Gradle 8.5
+          - Java 17 compatibility
+          - Distribution type: bin"
+          git push
+          echo "Gradle Wrapper files committed and pushed successfully"
+        fi
+    
+    - name: Verify Wrapper with Java 17
+      run: |
+        if [ -f "./gradlew" ]; then
+          echo "✅ gradlew exists and is executable: $(ls -la gradlew)"
+          ./gradlew --version
+          ./gradlew -version | grep "JVM:"
+        else
+          echo "❌ gradlew still missing"
+          exit 1
+        fi
