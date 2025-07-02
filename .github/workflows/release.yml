@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up JDK 11
+      uses: actions/setup-java@v4
+      with:
+        java-version: '11'
+        distribution: 'temurin'
+    
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
+    
+    - name: Make gradlew executable
+      run: chmod +x ./gradlew
+    
+    - name: Build release
+      run: ./gradlew clean build jar
+    
+    - name: Get version from tag
+      id: get_version
+      run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+    
+    - name: Create Release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ steps.get_version.outputs.VERSION }}
+        release_name: Unzipper ${{ steps.get_version.outputs.VERSION }}
+        body: |
+          ## Unzipper ${{ steps.get_version.outputs.VERSION }}
+          
+          ### Features
+          - Extract ZIP archives
+          - Extract TAR.GZ archives
+          - Command-line interface
+          - Security protection against Zip Slip attacks
+          
+          ### Usage
+          ```
+          java -jar unzipper-${{ steps.get_version.outputs.VERSION }}.jar
+          ```
+        draft: false
+        prerelease: false
+      id: create_release
+    
+    - name: Upload JAR to Release
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./build/libs/wireguard-1.0.0.jar
+        asset_name: unzipper-${{ steps.get_version.outputs.VERSION }}.jar
+        asset_content_type: application/java-archive
