@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+}
+
+group = 'com.leir4iks.wireguard'
+version = '2.0.0'
+
+repositories {
+    mavenCentral()
+    maven { url = 'https://repo.papermc.io/repository/maven-public/' }
+    maven { url = 'https://nexus.velocitypowered.com/repository/maven-public/' }
+}
+
+dependencies {
+    // Bukkit API
+    compileOnly 'org.bukkit:bukkit:1.20.1-R0.1-SNAPSHOT'
+    
+    // Velocity API
+    compileOnly 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
+    annotationProcessor 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
+    
+    // Curve25519 для правильной генерации ключей WireGuard
+    implementation 'org.whispersystems:curve25519-java:0.5.0'
+    
+    // Дополнительные зависимости для работы с сетью
+    implementation 'commons-codec:commons-codec:1.15'
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(17)
+}
+
+tasks {
+    build {
+        dependsOn shadowJar
+    }
+    
+    shadowJar {
+        archiveClassifier.set('')
+        mergeServiceFiles()
+        
+        // Включаем все зависимости в jar
+        relocate 'org.whispersystems', 'com.leir4iks.wireguard.relocated.whispersystems'
+        relocate 'org.apache.commons', 'com.leir4iks.wireguard.relocated.commons'
+        
+        exclude 'META-INF/*.SF'
+        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.RSA'
+    }
+    
+    processResources {
+        filesMatching(['plugin.yml', 'velocity-plugin.json']) {
+            expand project.properties
+        }
+    }
+}
+
+compileJava {
+    options.encoding = 'UTF-8'
+}
