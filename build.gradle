@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.leir4iks.wireguard'
-version = '2.0.0'
+version = '3.0.0'
 
 repositories {
     mavenCentral()
@@ -20,11 +20,25 @@ dependencies {
     compileOnly 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
     annotationProcessor 'com.velocitypowered:velocity-api:3.2.0-SNAPSHOT'
     
-    // Curve25519 для правильной генерации ключей WireGuard
+    // WireGuard Android tunnel library (работает и на сервере)
+    implementation 'com.wireguard.android:tunnel:1.0.20230427'
+    
+    // Curve25519 для ключей
     implementation 'org.whispersystems:curve25519-java:0.5.0'
     
-    // Дополнительные зависимости для работы с сетью
-    implementation 'commons-codec:commons-codec:1.15'
+    // Netty для высокопроизводительной сети
+    implementation 'io.netty:netty-all:4.1.100.Final'
+    
+    // JSON для конфигураций
+    implementation 'com.google.code.gson:gson:2.10.1'
+    
+    // Логирование
+    implementation 'org.slf4j:slf4j-api:2.0.9'
+    implementation 'ch.qos.logback:logback-classic:1.4.11'
+    
+    // Криптография
+    implementation 'org.bouncycastle:bcprov-jdk18on:1.76'
+    implementation 'org.bouncycastle:bcpkix-jdk18on:1.76'
 }
 
 java {
@@ -40,12 +54,13 @@ tasks {
         archiveClassifier.set('')
         mergeServiceFiles()
         
-        // Включаем все зависимости в jar
+        relocate 'io.netty', 'com.leir4iks.wireguard.relocated.netty'
         relocate 'org.whispersystems', 'com.leir4iks.wireguard.relocated.whispersystems'
-        relocate 'org.apache.commons', 'com.leir4iks.wireguard.relocated.commons'
+        relocate 'org.bouncycastle', 'com.leir4iks.wireguard.relocated.bouncycastle'
+        relocate 'com.google.gson', 'com.leir4iks.wireguard.relocated.gson'
         
         exclude 'META-INF/*.SF'
-        exclude 'META-INF/*.DSA'
+        exclude 'META-INF/*.DSA' 
         exclude 'META-INF/*.RSA'
     }
     
