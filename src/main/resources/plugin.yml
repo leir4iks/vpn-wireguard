@@ -1,0 +1,21 @@
+name: LeiriksWireguardVPN
+version: 3.0.0
+author: leir4iks
+main: com.leir4iks.wireguard.bukkit.WireguardVPNBukkitPlugin
+description: Полноценный VPN сервер для Docker/Pterodactyl без системных зависимостей
+api-version: 1.13
+website: https://github.com/leir4iks/wireguard-vpn-plugin
+
+commands:
+  vpn:
+    description: Команды управления VPN сервером
+    usage: /vpn <start|stop|create|list|help>
+    aliases: [wireguard, wg]
+
+permissions:
+  leir4iks.vpn.admin:
+    description: Полный доступ к VPN управлению
+    default: op
+  leir4iks.vpn.use:
+    description: Базовое использование VPN
+    default: true
